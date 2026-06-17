@@ -1,0 +1,15 @@
+{
+  "receivedAt": "2026-06-17T10:27:28",
+  "eventType": "end-of-call-report",
+  "timestamp": 1781672251799,
+  "callId": "019ed3f0-39c2-7cc2-baef-eb5b3b343e8a",
+  "customerNumber": "+12296823466",
+  "transcript": "AI: Hello, thank you for requesting an AI voice agent demonstration.\nUser: Hello could you please help me telling your services?\nAI: Sure, Stream wave offers a family.\nUser: Can you please?\nAI: Sure Stream Wave offers a family first streaming experience with a variety of premium entertainment at an affordable price. You can enjoy multiple profiles, multi device streaming, offline downloads, and parental controls. What else would you like to know?\nUser: Okay, thank you so much. Have a good day.\nAI: You're welcome, have a great day.\nUser: Bye bye.\nAI: all set if you need any assistance in the future please don't hesitate to reach out thank you for calling have a great day and\n",
+  "recordingUrl": "https://autoscoring.blob.core.windows.net/autoscoring/019ed3f0-39c2-7cc2-baef-eb5b3b343e8a-1781672249377-d6dbf120-a7fc-4195-81f6-35444a549d1a-mono.wav",
+  "sentiment": "positive",
+  "durationSeconds": 50.099,
+  "durationMinutes": 0.835,
+  "durationMs": 50099,
+  "cost": 0.0941,
+  "summary": "The user inquired about the AI's services, which were identified as Stream Wave. The AI explained that Stream Wave offers a family-first streaming experience with premium entertainment at an affordable price, including features like multiple profiles, multi-device streaming, offline downloads, and parental controls. The call ended after the user thanked the AI for the information."
+}

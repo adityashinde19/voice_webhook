@@ -1,0 +1,16 @@
+{
+  "receivedAt": "2026-06-17T12:57:49",
+  "eventType": "end-of-call-report",
+  "timestamp": 1781681273448,
+  "callId": "019ed47a-2fab-7000-9c87-fae13e7298b8",
+  "customerNumber": "+12296823466",
+  "transcript": "AI: Hello, thank you for requesting an AI Voice agent demonstration. I'm a virtual assistant for Streamwave, a fictional streaming service created for this demo. Feel free to ask questions to experience how the solution works. How may I assist you today?\nUser: No, thank you.\nAI: All right, if you need anything about stream wave, feel free to ask. Have a great day.\n",
+  "recordingUrl": "https://autoscoring.blob.core.windows.net/autoscoring/019ed47a-2fab-7000-9c87-fae13e7298b8-1781681270715-630d9555-08c3-42cb-abd0-4dfda251028c-mono.wav",
+  "sentiment": "neutral",
+  "durationSeconds": 29.874,
+  "durationMinutes": 0.4979,
+  "durationMs": 29874,
+  "cost": 0.0323,
+  "summary": "An AI virtual assistant for Streamwave introduced itself and offered assistance to the user. The user declined the offer, prompting the AI to conclude the call by offering future help if needed.",
+  "reportUrl": "https://3444-114-143-178-130.ngrok-free.app/call-report/?callId=019ed47a-2fab-7000-9c87-fae13e7298b8&apiBase=https://3444-114-143-178-130.ngrok-free.app"
+}

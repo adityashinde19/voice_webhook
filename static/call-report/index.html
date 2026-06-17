@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>StreamWave Call Report</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script>
+      window.CALL_REPORT_API_BASE = "";
+    </script>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar" aria-label="Report header">
+        <a class="brand" href="./" aria-label="StreamWave call report home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 48 28" role="img">
+              <path d="M3 14c6-8 13-8 20 0s14 8 22 0" />
+              <path d="M3 21c6-8 13-8 20 0s14 8 22 0" />
+              <path d="M3 7c6-8 13-8 20 0s14 8 22 0" />
+            </svg>
+          </span>
+          <span>
+            <strong>STREAMWAVE</strong>
+            <small>AI Voice Agent Demo</small>
+          </span>
+        </a>
+        <span class="powered">Powered by Aress Software</span>
+      </header>
+
+      <section id="missing-state" class="state-panel hidden" aria-live="polite">
+        <h1>Open a call report</h1>
+        <p>Add a call id to the URL, or enter one below.</p>
+        <form id="call-form" class="call-form">
+          <label for="call-id-input">Call ID</label>
+          <div class="input-row">
+            <input id="call-id-input" name="callId" autocomplete="off" placeholder="019ed3f0-39c2-7cc2-baef-eb5b3b343e8a" />
+            <button type="submit">Open</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="loading-state" class="state-panel" aria-live="polite">
+        <div class="loader" aria-hidden="true"></div>
+        <h1>Loading call report</h1>
+        <p>Fetching analytics for this call.</p>
+      </section>
+
+      <section id="error-state" class="state-panel hidden" aria-live="assertive">
+        <h1>Report unavailable</h1>
+        <p id="error-message">Unable to load this call report.</p>
+        <button id="retry-button" type="button">Retry</button>
+      </section>
+
+      <section id="report" class="report hidden">
+        <section class="hero panel">
+          <div class="status-orb" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="m6 12 4 4 8-9" />
+            </svg>
+          </div>
+          <div class="hero-copy">
+            <p class="eyebrow" id="event-type">End-of-call report</p>
+            <h1>Call Completed Successfully</h1>
+            <p>Thank you for speaking with our AI voice assistant.</p>
+            <div class="hero-meta">
+              <span id="report-date">-</span>
+              <span id="report-time">-</span>
+              <span id="customer-number">-</span>
+            </div>
+          </div>
+          <div class="hero-actions">
+            <button id="copy-link" type="button">Copy Link</button>
+            <button id="download-report" type="button">Download Report</button>
+          </div>
+        </section>
+
+        <section class="metric-grid" aria-label="Call metrics">
+          <article class="metric panel">
+            <span class="metric-icon blue" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 7v5l3 2" /><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+            </span>
+            <div>
+              <small>Duration</small>
+              <strong id="duration-main">-</strong>
+              <span id="duration-sub">-</span>
+            </div>
+          </article>
+          <article class="metric panel">
+            <span class="metric-icon green" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M8 14s1.5 2 4 2 4-2 4-2" /><path d="M9 9h.01" /><path d="M15 9h.01" /><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+            </span>
+            <div>
+              <small>Sentiment</small>
+              <strong id="sentiment-main">-</strong>
+              <span id="sentiment-sub">-</span>
+            </div>
+          </article>
+          <article class="metric panel">
+            <span class="metric-icon teal" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 2v20" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6" /></svg>
+            </span>
+            <div>
+              <small>Call Cost</small>
+              <strong id="cost-main">-</strong>
+              <span>Total Cost</span>
+            </div>
+          </article>
+          <article class="metric panel">
+            <span class="metric-icon purple" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 8V4" /><path d="M8 4h8" /><rect x="4" y="8" width="16" height="12" rx="4" /><path d="M9 14h.01" /><path d="M15 14h.01" /><path d="M9 18h6" /></svg>
+            </span>
+            <div>
+              <small>AI Handled</small>
+              <strong>100%</strong>
+              <span>No human transfer</span>
+            </div>
+          </article>
+        </section>
+
+        <section class="main-grid">
+          <article class="panel summary-card">
+            <div class="section-title">
+              <svg viewBox="0 0 24 24"><path d="M8 6h13" /><path d="M8 12h13" /><path d="M8 18h13" /><path d="M3 6h.01" /><path d="M3 12h.01" /><path d="M3 18h.01" /></svg>
+              <h2>Conversation Summary</h2>
+            </div>
+            <p id="summary-text">-</p>
+            <hr />
+            <h3>Key Highlights</h3>
+            <ul id="highlights"></ul>
+          </article>
+
+          <article class="panel chart-card">
+            <div class="section-title">
+              <svg viewBox="0 0 24 24"><path d="M3 3v18h18" /><path d="m19 9-5 5-4-4-3 3" /></svg>
+              <h2>Sentiment Trajectory</h2>
+            </div>
+            <div class="chart-wrap">
+              <svg id="sentiment-chart" viewBox="0 0 420 220" aria-labelledby="chart-title" role="img">
+                <title id="chart-title">Sentiment trajectory</title>
+                <g class="grid-lines">
+                  <path d="M50 30H395" />
+                  <path d="M50 95H395" />
+                  <path d="M50 160H395" />
+                </g>
+                <g class="axis-labels">
+                  <text x="8" y="35">Positive</text>
+                  <text x="12" y="100">Neutral</text>
+                  <text x="9" y="165">Negative</text>
+                  <text x="48" y="205">Start</text>
+                  <text x="160" y="205">Verify</text>
+                  <text x="275" y="205">Resolve</text>
+                  <text x="380" y="205">End</text>
+                </g>
+                <path id="chart-fill" class="chart-fill" d="" />
+                <path id="chart-line" class="chart-line" d="" />
+                <g id="chart-points"></g>
+              </svg>
+              <p id="chart-insight" class="insight">-</p>
+            </div>
+          </article>
+        </section>
+
+        <section class="lower-grid">
+          <article class="panel audio-card">
+            <div class="section-title">
+              <svg viewBox="0 0 24 24"><path d="M12 3v10" /><path d="M8 11a4 4 0 0 0 8 0" /><path d="M19 11a7 7 0 0 1-14 0" /><path d="M12 18v3" /></svg>
+              <h2>Call Recording</h2>
+            </div>
+            <audio id="recording-audio" preload="metadata"></audio>
+            <div class="wave-row">
+              <button id="play-recording" class="round-button" type="button" aria-label="Play recording">
+                <svg viewBox="0 0 24 24"><path d="m8 5 11 7-11 7Z" /></svg>
+              </button>
+              <div class="waveform" aria-hidden="true">
+                <span></span><span></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span><span></span><span></span>
+              </div>
+              <span id="audio-duration">-</span>
+            </div>
+            <button id="play-recording-wide" class="primary-button" type="button">Play Recording</button>
+            <a id="download-audio" class="secondary-button" href="#" download>Download Audio</a>
+          </article>
+
+          <article class="panel transcript-card">
+            <div class="section-title title-row">
+              <span>
+                <svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z" /></svg>
+                <h2>Conversation Transcript</h2>
+              </span>
+              <button id="toggle-transcript" type="button">View Full Transcript</button>
+            </div>
+            <div id="transcript-list" class="transcript-list"></div>
+          </article>
+        </section>
+
+        <section class="panel analytics">
+          <div class="section-title">
+            <svg viewBox="0 0 24 24"><path d="M3 3v18h18" /><path d="M7 16v-5" /><path d="M12 16V8" /><path d="M17 16v-9" /></svg>
+            <h2>Call Analytics</h2>
+          </div>
+          <div class="analytics-grid">
+            <div><small>Talk to Listen Ratio</small><strong id="ratio-main">-</strong><span id="ratio-sub">AI share estimate</span></div>
+            <div><small>First Contact Resolution</small><strong>Resolved</strong><span>Issue settled by AI</span></div>
+            <div><small>Verification Status</small><strong>Passed</strong><span>Call completed</span></div>
+            <div><small>Intent Confidence</small><strong id="confidence-main">-</strong><span>Estimated confidence</span></div>
+            <div><small>Feature Inquiry</small><strong id="inquiry-main">-</strong><span>Conversation signal</span></div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

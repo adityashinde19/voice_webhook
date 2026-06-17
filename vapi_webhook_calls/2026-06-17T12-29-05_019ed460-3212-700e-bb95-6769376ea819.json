@@ -1,0 +1,16 @@
+{
+  "receivedAt": "2026-06-17T12:29:05",
+  "eventType": "end-of-call-report",
+  "timestamp": 1781679549386,
+  "callId": "019ed460-3212-700e-bb95-6769376ea819",
+  "customerNumber": "+12296823466",
+  "transcript": "AI: Hello, thank you for requesting an AI voice agent demonstration.\n",
+  "recordingUrl": "https://autoscoring.blob.core.windows.net/autoscoring/019ed460-3212-700e-bb95-6769376ea819-1781679547037-8a9caff3-b2d7-4d35-b9a6-f2a0329b5932-mono.wav",
+  "sentiment": "neutral",
+  "durationSeconds": 9.655,
+  "durationMinutes": 0.1609,
+  "durationMs": 9655,
+  "cost": 0.0086,
+  "summary": "The AI initiated the call to demonstrate its voice agent capabilities. However, the call ended abruptly as the customer disconnected before the demonstration could proceed.",
+  "reportUrl": "http://127.0.0.1:8765/?callId=019ed460-3212-700e-bb95-6769376ea819&apiBase=http://127.0.0.1:8002"
+}

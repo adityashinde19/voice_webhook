@@ -1,0 +1,15 @@
+{
+  "receivedAt": "2026-06-17T11:33:24",
+  "eventType": "end-of-call-report",
+  "timestamp": 1781676207859,
+  "callId": "019ed42d-3178-7000-9dc6-c11361db25ae",
+  "customerNumber": "+12296823466",
+  "transcript": "AI: Hello, thank you for requesting an AI voice agent demonstration.\n",
+  "recordingUrl": "https://autoscoring.blob.core.windows.net/autoscoring/019ed42d-3178-7000-9dc6-c11361db25ae-1781676203627-ee7ead47-0b17-471f-baba-222872edeb2a-mono.wav",
+  "sentiment": "neutral",
+  "durationSeconds": 8.704,
+  "durationMinutes": 0.1451,
+  "durationMs": 8704,
+  "cost": 0.0078,
+  "summary": "The call began with an AI voice agent greeting, indicating it was for a demonstration. However, the call ended abruptly and was terminated by the customer immediately after the AI's initial welcome."
+}

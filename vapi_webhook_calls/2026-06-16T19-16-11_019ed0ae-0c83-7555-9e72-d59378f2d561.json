@@ -1,0 +1,14 @@
+{
+  "receivedAt": "2026-06-16T19:16:11",
+  "eventType": "end-of-call-report",
+  "timestamp": 1781617573445,
+  "callId": "019ed0ae-0c83-7555-9e72-d59378f2d561",
+  "transcript": "User: It has 4.\nAI: Hello, thank you for requesting an AI voice agent demonstration.\nUser: Please tell me what service you are providing.\nAI: Stream Wave is a streaming service that offers a family first experience with premium entertainment at an affordable price. We.\nUser: Okay, thank you so much. You gave me a lot of information. Have a good day, goodbye.\nAI: all set if you need any assistance in the future please don't hesitate to reach out thank you for calling have a great day and\n",
+  "recordingUrl": "https://autoscoring.blob.core.windows.net/autoscoring/019ed0ae-0c83-7555-9e72-d59378f2d561-1781617564993-7d64fdc5-7f0c-4d78-afe4-9d625023bd37-mono.wav",
+  "sentiment": "positive",
+  "durationSeconds": 33.813,
+  "durationMinutes": 0.5636,
+  "durationMs": 33813,
+  "cost": 0.0581,
+  "summary": "The call was a brief demonstration of an AI voice agent for Stream Wave, a family-oriented streaming service. The user asked about the service being provided, and the AI explained that Stream Wave offers premium entertainment at an affordable price with a family-first approach. The call ended quickly after the user thanked the AI and said goodbye."
+}

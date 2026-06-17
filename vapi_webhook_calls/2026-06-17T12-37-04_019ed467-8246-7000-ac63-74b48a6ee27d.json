@@ -1,0 +1,16 @@
+{
+  "receivedAt": "2026-06-17T12:37:04",
+  "eventType": "end-of-call-report",
+  "timestamp": 1781680027893,
+  "callId": "019ed467-8246-7000-ac63-74b48a6ee27d",
+  "customerNumber": "+12296823466",
+  "transcript": "AI: Hello, thank you for requesting an AI voice agent demonstration.\nUser: My federal government is zero.\n",
+  "recordingUrl": "https://autoscoring.blob.core.windows.net/autoscoring/019ed467-8246-7000-ac63-74b48a6ee27d-1781680025301-60d86b3e-a8e4-44bd-9547-960590f15372-mono.wav",
+  "sentiment": "neutral",
+  "durationSeconds": 8.67,
+  "durationMinutes": 0.1445,
+  "durationMs": 8670,
+  "cost": 0.0078,
+  "summary": "The call began with an AI offering a demonstration of its voice agent capabilities. The user responded with an unrelated statement about their federal government being \"zero,\" and then abruptly ended the call.",
+  "reportUrl": "https://3444-114-143-178-130.ngrok-free.app/call-report/?callId=019ed467-8246-7000-ac63-74b48a6ee27d&apiBase=https://3444-114-143-178-130.ngrok-free.app"
+}
