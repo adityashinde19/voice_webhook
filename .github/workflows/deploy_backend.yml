@@ -7,7 +7,7 @@ on:
       - 'app/**'
       - 'Dockerfile'
       - 'requirements.txt'
-      - '.github/workflows/deploy-backend.yml'
+      - '.github/workflows/deploy_backend.yml'
   workflow_dispatch:
 
 env:
