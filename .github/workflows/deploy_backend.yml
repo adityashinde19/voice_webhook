@@ -1,9 +1,8 @@
-name: Deploy Backend to Azure Container Apps.
+name: Deploy Backend to Azure Container Apps
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
     paths:
       - 'app/**'
       - 'Dockerfile'
