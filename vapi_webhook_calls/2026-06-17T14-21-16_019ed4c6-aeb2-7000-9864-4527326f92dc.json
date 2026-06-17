@@ -1,0 +1,26 @@
+{
+  "receivedAt": "2026-06-17T14:21:16",
+  "eventType": "end-of-call-report",
+  "timestamp": 1781686279845,
+  "callId": "019ed4c6-aeb2-7000-9864-4527326f92dc",
+  "customerNumber": "+12296823466",
+  "transcript": "AI: Hello, thank you for requesting an AI Voice agent demonstration. I am a virtual assistant for Streamwave, a fictional streaming service created for this demo. Feel free to ask questions to experience how the solution works. How may I assist you today?\n",
+  "recordingUrl": "https://autoscoring.blob.core.windows.net/autoscoring/019ed4c6-aeb2-7000-9864-4527326f92dc-1781686273480-3f442000-3d98-499a-9498-585e076d0890-mono.wav",
+  "sentiment": "neutral",
+  "durationSeconds": 19.462,
+  "durationMinutes": 0.3244,
+  "durationMs": 19462,
+  "cost": 0.0176,
+  "summary": "The AI voice agent introduced itself as a virtual assistant for Streamwave, a fictional streaming service created for a demonstration. It offered to answer questions to showcase the solution, but the call ended immediately after this initial greeting.",
+  "reportUrl": "https://3444-114-143-178-130.ngrok-free.app/call-report/?callId=019ed4c6-aeb2-7000-9864-4527326f92dc&apiBase=https://3444-114-143-178-130.ngrok-free.app",
+  "smsResult": {
+    "sent": true,
+    "sid": "SM7fec6e556e5cee71a3ae3a220a6be7a2",
+    "status": "accepted",
+    "from": "+18555721203",
+    "to": "+12296823466",
+    "body": "Thank you for calling Aress. Below is the attached report of your demo call: https://3444-114-143-178-130.ngrok-free.app/call-report/?callId=019ed4c6-aeb2-7000-9864-4527326f92dc&apiBase=https://3444-114-143-178-130.ngrok-free.app",
+    "errorCode": null,
+    "errorMessage": null
+  }
+}

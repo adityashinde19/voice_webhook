@@ -10,6 +10,7 @@ import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from twilio.rest import Client
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -106,6 +107,49 @@ def _save_report_url(report_url: str) -> None:
         file.write(f"{datetime.now().isoformat(timespec='seconds')} {report_url}\n")
 
 
+def _send_report_sms(customer_number: Optional[str], report_url: str) -> dict[str, Any]:
+    if not customer_number:
+        return {"sent": False, "reason": "Customer number not found in webhook payload."}
+
+    required_env_vars = [
+        "TWILIO_ACCOUNT_SID",
+        "TWILIO_AUTH_TOKEN",
+        "TWILIO_MESSAGING_SERVICE_SID",
+        "TWILIO_FROM_NUMBER",
+    ]
+    missing_env_vars = [name for name in required_env_vars if not os.getenv(name)]
+    if missing_env_vars:
+        return {"sent": False, "reason": f"Missing Twilio environment variables: {', '.join(missing_env_vars)}"}
+
+    sms_body_template = os.getenv(
+        "TWILIO_REPORT_SMS_BODY",
+        "Thank you for calling Aress. Below is the attached report of your demo call: {report_url}",
+    )
+    sms_body = sms_body_template.format(report_url=report_url)
+
+    try:
+        client = Client(os.environ["TWILIO_ACCOUNT_SID"], os.environ["TWILIO_AUTH_TOKEN"])
+        message = client.messages.create(
+            body=sms_body,
+            messaging_service_sid=os.environ["TWILIO_MESSAGING_SERVICE_SID"],
+            from_=os.environ["TWILIO_FROM_NUMBER"],
+            to=customer_number,
+        )
+    except Exception as error:
+        return {"sent": False, "to": customer_number, "reason": str(error)}
+
+    return {
+        "sent": True,
+        "sid": message.sid,
+        "status": message.status,
+        "from": message.from_,
+        "to": message.to,
+        "body": message.body,
+        "errorCode": message.error_code,
+        "errorMessage": message.error_message,
+    }
+
+
 def _get_call_analytics(call_id: str) -> Optional[dict[str, Any]]:
     query = "SELECT analytics FROM call_analytics WHERE call_id = ?;"
 
@@ -173,6 +217,7 @@ async def receive_vapi_webhook(request: Request) -> JSONResponse:
     safe_call_id = "".join(character if character.isalnum() or character in ("-", "_") else "_" for character in str(call_id or "unknown"))
     db_call_id = str(call_id or safe_call_id)
     report_url = _build_report_url(db_call_id)
+    sms_result: dict[str, Any] = {"sent": False, "reason": "SMS not attempted yet."}
     output_data = {
         "receivedAt": received_at,
         "eventType": event_type,
@@ -188,12 +233,17 @@ async def receive_vapi_webhook(request: Request) -> JSONResponse:
         "cost": cost,
         "summary": summary,
         "reportUrl": report_url,
+        "smsResult": sms_result,
     }
     WEBHOOK_OUTPUT_DIR.mkdir(exist_ok=True)
     output_file = WEBHOOK_OUTPUT_DIR / f"{received_at.replace(':', '-')}_{safe_call_id}.json"
     output_file.write_text(json.dumps(output_data, indent=2, ensure_ascii=False), encoding="utf-8")
     _store_call_analytics(db_call_id, output_data)
     _save_report_url(report_url)
+    sms_result = _send_report_sms(customer_number, report_url)
+    output_data["smsResult"] = sms_result
+    output_file.write_text(json.dumps(output_data, indent=2, ensure_ascii=False), encoding="utf-8")
+    _store_call_analytics(db_call_id, output_data)
 
     print("\n" + "=" * 80, flush=True)
     print("VAPI WEBHOOK RECEIVED", flush=True)
@@ -215,9 +265,10 @@ async def receive_vapi_webhook(request: Request) -> JSONResponse:
     print("Saved DB: call_analytics", flush=True)
     print(f"Report URL: {report_url}", flush=True)
     print(f"Report URL File: {LATEST_REPORT_URL_FILE}", flush=True)
+    print(f"SMS Result: {json.dumps(sms_result, ensure_ascii=False)}", flush=True)
     print("=" * 80 + "\n", flush=True)
 
-    return JSONResponse({"received": True, "event_type": event_type, "call_id": call_id, "saved_file": str(output_file), "saved_db": True, "report_url": report_url})
+    return JSONResponse({"received": True, "event_type": event_type, "call_id": call_id, "saved_file": str(output_file), "saved_db": True, "report_url": report_url, "sms_result": sms_result})
 
 
 if __name__ == "__main__":
