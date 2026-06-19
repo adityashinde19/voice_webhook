@@ -10,9 +10,9 @@ import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from twilio.rest import Client
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from twilio.rest import Client
 
 
 app = FastAPI(title="Vapi Webhook Receiver")
@@ -36,8 +36,19 @@ app.add_middleware(
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
+
+
+class NoCacheStaticFiles(StaticFiles):
+    async def get_response(self, path: str, scope: dict[str, Any]):
+        response = await super().get_response(path, scope)
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
+
+
 if STATIC_REPORT_DIR.exists():
-    app.mount("/call-report", StaticFiles(directory=STATIC_REPORT_DIR, html=True), name="call-report")
+    app.mount("/call-report", NoCacheStaticFiles(directory=STATIC_REPORT_DIR, html=True), name="call-report")
 
 
 def _safe_get(data: dict[str, Any], *keys: str) -> Any:

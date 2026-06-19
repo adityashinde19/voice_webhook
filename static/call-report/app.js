@@ -10,12 +10,10 @@ const elements = {
   eventType: document.querySelector("#event-type"),
   reportDate: document.querySelector("#report-date"),
   reportTime: document.querySelector("#report-time"),
-  customerNumber: document.querySelector("#customer-number"),
   durationMain: document.querySelector("#duration-main"),
   durationSub: document.querySelector("#duration-sub"),
   sentimentMain: document.querySelector("#sentiment-main"),
   sentimentSub: document.querySelector("#sentiment-sub"),
-  costMain: document.querySelector("#cost-main"),
   summaryText: document.querySelector("#summary-text"),
   highlights: document.querySelector("#highlights"),
   chartLine: document.querySelector("#chart-line"),
@@ -27,13 +25,11 @@ const elements = {
   playButton: document.querySelector("#play-recording"),
   playWideButton: document.querySelector("#play-recording-wide"),
   downloadAudio: document.querySelector("#download-audio"),
-  transcriptList: document.querySelector("#transcript-list"),
-  toggleTranscript: document.querySelector("#toggle-transcript"),
-  downloadReport: document.querySelector("#download-report"),
-  copyLink: document.querySelector("#copy-link"),
   ratioMain: document.querySelector("#ratio-main"),
-  confidenceMain: document.querySelector("#confidence-main"),
   inquiryMain: document.querySelector("#inquiry-main"),
+  gaugeNeedle: document.querySelector("#gauge-needle"),
+  gaugeArc: document.querySelector("#gauge-arc"),
+  gaugeLabel: document.querySelector("#gauge-label"),
 };
 
 let currentReport = null;
@@ -43,9 +39,8 @@ const sampleReport = {
   eventType: "end-of-call-report",
   timestamp: 1781672251799,
   callId: "demo-call-id",
-  customerNumber: "+1 229 682 3466",
   transcript:
-    "AI: Hello, thank you for requesting an AI voice agent demonstration.\nUser: Hello, could you please help me understand your services?\nAI: Sure, StreamWave offers a family-first streaming experience with premium entertainment, multiple profiles, offline downloads, and parental controls.\nUser: Okay, thank you so much. Have a good day.\nAI: You're welcome, have a great day.",
+    "AI: Hello, thank you for requesting an AI voice agent demonstration.\nUser: Hello, could you please help me understand your services?\nAI: Sure, Aress offers cutting-edge AI solutions including voice agents, automation, and intelligent workflows.\nUser: Okay, thank you so much. Have a good day.\nAI: You're welcome, have a great day.",
   recordingUrl: "",
   sentiment: "positive",
   durationSeconds: 50.099,
@@ -53,7 +48,7 @@ const sampleReport = {
   durationMs: 50099,
   cost: 0.0941,
   summary:
-    "The user asked about StreamWave services. The AI explained the service benefits, including multiple profiles, multi-device streaming, offline downloads, and parental controls. The call ended after the user thanked the AI for the information.",
+    "The user asked about Aress AI services. The AI explained AI solutions, voice agent capabilities, automation, and intelligent workflows. The call ended after the user thanked the AI for the information.",
 };
 
 function getCallId() {
@@ -105,11 +100,6 @@ function formatDuration(seconds, minutes, milliseconds) {
   };
 }
 
-function formatMoney(value) {
-  const amount = Number(value);
-  return Number.isFinite(amount) ? `$${amount.toFixed(2)}` : "-";
-}
-
 function normalizeSentiment(value) {
   const sentiment = String(value || "neutral").toLowerCase();
   if (sentiment.includes("positive")) return "positive";
@@ -125,6 +115,10 @@ function sentimentMeta(sentiment) {
       points: [32, 46, 68, 92],
       insight: "Call ended on a positive resolution.",
       confidence: "92%",
+      // needle rotation: -90deg=neg, 0deg=neu, +90deg=pos
+      needleDeg: 80,
+      arcColor: "var(--green)",
+      arcOffset: 0,
     },
     neutral: {
       label: "Neutral",
@@ -132,6 +126,9 @@ function sentimentMeta(sentiment) {
       points: [44, 50, 54, 56],
       insight: "Call stayed balanced without strong positive or negative signals.",
       confidence: "78%",
+      needleDeg: -5,
+      arcColor: "var(--warning)",
+      arcOffset: 86,
     },
     negative: {
       label: "Negative",
@@ -139,6 +136,9 @@ function sentimentMeta(sentiment) {
       points: [58, 48, 34, 22],
       insight: "Call ended with negative sentiment and should be reviewed.",
       confidence: "64%",
+      needleDeg: -80,
+      arcColor: "var(--danger)",
+      arcOffset: 155,
     },
   }[sentiment];
 }
@@ -154,7 +154,6 @@ function escapeHtml(value) {
 
 function buildHighlights(report, sentiment) {
   const highlights = [];
-  if (report.customerNumber) highlights.push("Customer number captured for follow-up.");
   if (report.summary) highlights.push(...String(report.summary).split(/(?<=[.!?])\s+/).filter(Boolean).slice(0, 2));
   if (report.recordingUrl) highlights.push("Call recording is available for audit.");
   highlights.push(`Overall customer sentiment is ${sentiment}.`);
@@ -191,25 +190,19 @@ function renderChart(points) {
     .join("");
 }
 
-function renderTranscript(messages) {
-  if (!messages.length) {
-    elements.transcriptList.innerHTML = '<p class="empty-copy">No transcript received.</p>';
-    elements.toggleTranscript.disabled = true;
-    return;
-  }
+function animateGauge(sentimentInfo) {
+  // Start from leftmost (negative) then animate to correct position
+  elements.gaugeNeedle.style.transform = "rotate(-90deg)";
+  elements.gaugeArc.style.stroke = sentimentInfo.arcColor;
+  elements.gaugeArc.style.strokeDashoffset = "172";
+  elements.gaugeLabel.textContent = sentimentInfo.label;
 
-  elements.toggleTranscript.disabled = messages.length <= 4;
-  elements.transcriptList.innerHTML = messages
-    .map((message) => `
-      <article class="message ${message.type}">
-        <span class="avatar" aria-hidden="true">${message.type === "user" ? "U" : "AI"}</span>
-        <div>
-          <strong>${escapeHtml(message.speaker)}</strong>
-          <p>${escapeHtml(message.text)}</p>
-        </div>
-      </article>
-    `)
-    .join("");
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      elements.gaugeNeedle.style.transform = `rotate(${sentimentInfo.needleDeg}deg)`;
+      elements.gaugeArc.style.strokeDashoffset = sentimentInfo.arcOffset;
+    }, 300);
+  });
 }
 
 function estimateTalkRatio(messages) {
@@ -238,23 +231,20 @@ function renderReport(report) {
   elements.eventType.textContent = report.eventType || "End-of-call report";
   elements.reportDate.textContent = dateParts.date;
   elements.reportTime.textContent = dateParts.time;
-  elements.customerNumber.textContent = report.customerNumber || "Number unavailable";
   elements.durationMain.textContent = duration.main;
   elements.durationSub.textContent = duration.sub;
   elements.sentimentMain.textContent = sentimentInfo.label;
   elements.sentimentSub.textContent = sentimentInfo.sub;
-  elements.costMain.textContent = formatMoney(report.cost);
   elements.summaryText.textContent = report.summary || "No summary received.";
   elements.highlights.innerHTML = buildHighlights(report, sentimentInfo.label.toLowerCase())
     .map((item) => `<li>${escapeHtml(item)}</li>`)
     .join("");
   elements.chartInsight.textContent = sentimentInfo.insight;
-  elements.confidenceMain.textContent = sentimentInfo.confidence;
   elements.inquiryMain.textContent = report.summary ? "Detected" : "Unknown";
   elements.ratioMain.textContent = estimateTalkRatio(messages);
 
   renderChart(sentimentInfo.points);
-  renderTranscript(messages);
+  animateGauge(sentimentInfo);
 
   if (report.recordingUrl) {
     elements.audio.src = report.recordingUrl;
@@ -297,7 +287,7 @@ async function loadReport() {
 }
 
 function togglePlayback() {
-  if (!elements.audio.src) return;
+  if (!elements.audio || !elements.audio.src) return;
   if (elements.audio.paused) {
     elements.audio.play();
   } else {
@@ -305,45 +295,36 @@ function togglePlayback() {
   }
 }
 
-elements.callForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const value = elements.callInput.value.trim();
-  if (!value) return;
-  const params = new URLSearchParams(window.location.search);
-  params.set("callId", value);
-  window.location.search = params.toString();
-});
+if (elements.callForm && elements.callInput) {
+  elements.callForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const value = elements.callInput.value.trim();
+    if (!value) return;
+    const params = new URLSearchParams(window.location.search);
+    params.set("callId", value);
+    window.location.search = params.toString();
+  });
+}
 
-elements.retryButton.addEventListener("click", loadReport);
-elements.playButton.addEventListener("click", togglePlayback);
-elements.playWideButton.addEventListener("click", togglePlayback);
-elements.audio.addEventListener("play", () => {
-  elements.playWideButton.textContent = "Pause Recording";
-});
-elements.audio.addEventListener("pause", () => {
-  elements.playWideButton.textContent = "Play Recording";
-});
-elements.toggleTranscript.addEventListener("click", () => {
-  elements.transcriptList.classList.toggle("expanded");
-  elements.toggleTranscript.textContent = elements.transcriptList.classList.contains("expanded")
-    ? "Collapse Transcript"
-    : "View Full Transcript";
-});
-elements.downloadReport.addEventListener("click", () => {
-  if (!currentReport) return;
-  const blob = new Blob([JSON.stringify(currentReport, null, 2)], { type: "application/json" });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = `${currentReport.callId || "call-report"}.json`;
-  link.click();
-  URL.revokeObjectURL(link.href);
-});
-elements.copyLink.addEventListener("click", async () => {
-  await navigator.clipboard.writeText(window.location.href);
-  elements.copyLink.textContent = "Copied";
-  setTimeout(() => {
-    elements.copyLink.textContent = "Copy Link";
-  }, 1400);
-});
+if (elements.retryButton) {
+  elements.retryButton.addEventListener("click", loadReport);
+}
+
+if (elements.playButton) {
+  elements.playButton.addEventListener("click", togglePlayback);
+}
+
+if (elements.playWideButton) {
+  elements.playWideButton.addEventListener("click", togglePlayback);
+}
+
+if (elements.audio && elements.playWideButton) {
+  elements.audio.addEventListener("play", () => {
+    elements.playWideButton.textContent = "Pause";
+  });
+  elements.audio.addEventListener("pause", () => {
+    elements.playWideButton.textContent = "Play";
+  });
+}
 
 loadReport();

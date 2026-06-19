@@ -714,3 +714,151 @@ body[data-sentiment="neutral"] .chart-line {
     scroll-behavior: auto !important;
   }
 }
+
+/* ── Aress Logo ── */
+.aress-logo-wrap {
+  display: flex;
+  align-items: center;
+  width: auto;
+  height: 36px;
+  flex: 0 0 auto;
+}
+.aress-logo-img {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+.aress-logo-fallback {
+  width: 44px;
+  height: 30px;
+  color: var(--cyan);
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Gauge metric card ── */
+.gauge-metric {
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0;
+  padding: 16px;
+}
+.gauge-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+.gauge-svg {
+  width: 100%;
+  max-width: 140px;
+}
+.gauge-label {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+}
+#gauge-needle {
+  transform-origin: 70px 75px;
+  transition: transform 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+#gauge-arc {
+  transition: stroke 0.6s ease, stroke-dashoffset 0.8s ease;
+}
+
+/* ── Compact audio card ── */
+.audio-card-compact {
+  margin-bottom: 16px;
+  padding: 18px 22px;
+}
+.audio-card-compact .section-title {
+  margin-bottom: 12px;
+}
+.audio-card-compact .wave-row {
+  padding: 12px 16px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.audio-inline-btn {
+  min-height: 38px !important;
+  width: auto !important;
+  margin-top: 0 !important;
+  padding: 0 16px !important;
+  font-size: 13px;
+  flex: 0 0 auto;
+}
+
+/* ── CTA Buttons Row ── */
+.cta-row {
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 28px;
+  padding: 28px 0 10px;
+  border-top: 1px solid rgba(170, 182, 209, 0.18);
+}
+.cta-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 184px;
+  min-height: 58px;
+  padding: 0 30px;
+  border-radius: 999px;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+.cta-button svg {
+  width: 19px;
+  height: 19px;
+  flex: 0 0 auto;
+}
+.cta-button:hover {
+  transform: translateY(-2px);
+}
+.cta-primary {
+  border: 0;
+  background: linear-gradient(135deg, #7c3cff 0%, #2f8cff 100%);
+  color: white;
+  box-shadow: 0 12px 30px rgba(47, 140, 255, 0.34);
+}
+.cta-primary:hover {
+  box-shadow: 0 16px 38px rgba(47, 140, 255, 0.5);
+}
+.cta-secondary {
+  background: rgba(9, 13, 26, 0.92);
+  border: 1px solid rgba(124, 60, 255, 0.7);
+  color: #d7ccff;
+  box-shadow: inset 0 0 18px rgba(124, 60, 255, 0.18), 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+.cta-secondary:hover {
+  background: rgba(124, 60, 255, 0.16);
+  box-shadow: inset 0 0 22px rgba(124, 60, 255, 0.24), 0 12px 30px rgba(124, 60, 255, 0.26);
+}
+
+/* ── Analytics — 4 cols now (removed Intent Confidence) ── */
+.analytics-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 920px) {
+  .analytics-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 640px) {
+  .analytics-grid { grid-template-columns: 1fr; }
+  .cta-row { flex-direction: column; align-items: stretch; }
+  .cta-button { width: 100%; justify-content: center; }
+  .audio-card-compact .wave-row { flex-direction: column; align-items: stretch; }
+  .audio-inline-btn { width: 100% !important; justify-content: center; }
+}

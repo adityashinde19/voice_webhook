@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>StreamWave Call Report</title>
+    <title>Aress AI Voice Agent Report</title>
     <link rel="stylesheet" href="./styles.css" />
     <script>
       window.CALL_REPORT_API_BASE = "";
@@ -12,16 +12,23 @@
   <body>
     <main class="shell">
       <header class="topbar" aria-label="Report header">
-        <a class="brand" href="./" aria-label="StreamWave call report home">
-          <span class="brand-mark" aria-hidden="true">
-            <svg viewBox="0 0 48 28" role="img">
-              <path d="M3 14c6-8 13-8 20 0s14 8 22 0" />
-              <path d="M3 21c6-8 13-8 20 0s14 8 22 0" />
-              <path d="M3 7c6-8 13-8 20 0s14 8 22 0" />
-            </svg>
+        <a class="brand" href="./" aria-label="Aress call report home">
+          <span class="brand-mark aress-logo-wrap" aria-hidden="true">
+            <img
+              src="https://www.aress.com/assets/images/common/logo.webp"
+              alt="Aress"
+              class="aress-logo-img"
+              onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+            />
+            <span class="aress-logo-fallback" style="display:none;">
+              <svg viewBox="0 0 48 28" role="img">
+                <path d="M3 14c6-8 13-8 20 0s14 8 22 0" />
+                <path d="M3 21c6-8 13-8 20 0s14 8 22 0" />
+                <path d="M3 7c6-8 13-8 20 0s14 8 22 0" />
+              </svg>
+            </span>
           </span>
           <span>
-            <strong>STREAMWAVE</strong>
             <small>AI Voice Agent Demo</small>
           </span>
         </a>
@@ -66,12 +73,7 @@
             <div class="hero-meta">
               <span id="report-date">-</span>
               <span id="report-time">-</span>
-              <span id="customer-number">-</span>
             </div>
-          </div>
-          <div class="hero-actions">
-            <button id="copy-link" type="button">Copy Link</button>
-            <button id="download-report" type="button">Download Report</button>
           </div>
         </section>
 
@@ -97,16 +99,6 @@
             </div>
           </article>
           <article class="metric panel">
-            <span class="metric-icon teal" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M12 2v20" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6" /></svg>
-            </span>
-            <div>
-              <small>Call Cost</small>
-              <strong id="cost-main">-</strong>
-              <span>Total Cost</span>
-            </div>
-          </article>
-          <article class="metric panel">
             <span class="metric-icon purple" aria-hidden="true">
               <svg viewBox="0 0 24 24"><path d="M12 8V4" /><path d="M8 4h8" /><rect x="4" y="8" width="16" height="12" rx="4" /><path d="M9 14h.01" /><path d="M15 14h.01" /><path d="M9 18h6" /></svg>
             </span>
@@ -116,6 +108,62 @@
               <span>No human transfer</span>
             </div>
           </article>
+          <!-- Sentiment Gauge Card -->
+          <article class="metric panel gauge-metric">
+            <div class="gauge-wrap">
+              <svg id="sentiment-gauge-svg" viewBox="0 0 140 80" class="gauge-svg" aria-label="Sentiment gauge">
+                <!-- Background arc -->
+                <path d="M15 75 A55 55 0 0 1 125 75" fill="none" stroke="rgba(170,182,209,0.18)" stroke-width="10" stroke-linecap="round"/>
+                <!-- Colored arc -->
+                <path id="gauge-arc" d="M15 75 A55 55 0 0 1 125 75" fill="none" stroke="var(--green)" stroke-width="10" stroke-linecap="round"
+                      stroke-dasharray="172" stroke-dashoffset="0"/>
+                <!-- Needle -->
+                <g id="gauge-needle" transform-origin="70 75" style="transform: rotate(-90deg);">
+                  <line x1="70" y1="75" x2="70" y2="28" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                  <circle cx="70" cy="75" r="5" fill="white"/>
+                </g>
+                <text x="10" y="85" fill="var(--danger)" font-size="9" font-family="inherit">Neg</text>
+                <text x="57" y="22" fill="var(--warning)" font-size="9" font-family="inherit">Neu</text>
+                <text x="112" y="85" fill="var(--green)" font-size="9" font-family="inherit">Pos</text>
+              </svg>
+              <small class="gauge-label" id="gauge-label">Sentiment</small>
+            </div>
+          </article>
+        </section>
+
+        <!-- Recording row — compact, above analytics -->
+        <article class="panel audio-card audio-card-compact">
+          <div class="section-title">
+            <svg viewBox="0 0 24 24"><path d="M12 3v10" /><path d="M8 11a4 4 0 0 0 8 0" /><path d="M19 11a7 7 0 0 1-14 0" /><path d="M12 18v3" /></svg>
+            <h2>Call Recording</h2>
+          </div>
+          <audio id="recording-audio" preload="metadata"></audio>
+          <div class="wave-row">
+            <button id="play-recording" class="round-button" type="button" aria-label="Play recording">
+              <svg viewBox="0 0 24 24"><path d="m8 5 11 7-11 7Z" /></svg>
+            </button>
+            <div class="waveform" aria-hidden="true">
+              <span></span><span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <span id="audio-duration">-</span>
+            <button id="play-recording-wide" class="primary-button audio-inline-btn" type="button">Play</button>
+            <a id="download-audio" class="secondary-button audio-inline-btn" href="#" download>Download</a>
+          </div>
+        </article>
+
+        <!-- Call Analytics — above summary -->
+        <section class="panel analytics">
+          <div class="section-title">
+            <svg viewBox="0 0 24 24"><path d="M3 3v18h18" /><path d="M7 16v-5" /><path d="M12 16V8" /><path d="M17 16v-9" /></svg>
+            <h2>Call Analytics</h2>
+          </div>
+          <div class="analytics-grid">
+            <div><small>Talk to Listen Ratio</small><strong id="ratio-main">-</strong><span id="ratio-sub">AI share estimate</span></div>
+            <div><small>First Contact Resolution</small><strong>Resolved</strong><span>Issue settled by AI</span></div>
+            <div><small>Verification Status</small><strong>Passed</strong><span>Call completed</span></div>
+            <div><small>Feature Inquiry</small><strong id="inquiry-main">-</strong><span>Conversation signal</span></div>
+          </div>
         </section>
 
         <section class="main-grid">
@@ -161,55 +209,20 @@
           </article>
         </section>
 
-        <section class="lower-grid">
-          <article class="panel audio-card">
-            <div class="section-title">
-              <svg viewBox="0 0 24 24"><path d="M12 3v10" /><path d="M8 11a4 4 0 0 0 8 0" /><path d="M19 11a7 7 0 0 1-14 0" /><path d="M12 18v3" /></svg>
-              <h2>Call Recording</h2>
-            </div>
-            <audio id="recording-audio" preload="metadata"></audio>
-            <div class="wave-row">
-              <button id="play-recording" class="round-button" type="button" aria-label="Play recording">
-                <svg viewBox="0 0 24 24"><path d="m8 5 11 7-11 7Z" /></svg>
-              </button>
-              <div class="waveform" aria-hidden="true">
-                <span></span><span></span><span></span><span></span><span></span><span></span>
-                <span></span><span></span><span></span><span></span><span></span><span></span>
-              </div>
-              <span id="audio-duration">-</span>
-            </div>
-            <button id="play-recording-wide" class="primary-button" type="button">Play Recording</button>
-            <a id="download-audio" class="secondary-button" href="#" download>Download Audio</a>
-          </article>
+        <!-- CTA Buttons -->
+        <div class="cta-row">
+          <a href="https://www.aress.ai/" target="_blank" rel="noopener" class="cta-button cta-primary">
+            🎙️ Try Me Now
+          </a>
+          <a href="https://www.aress.ai/ai-solutions/" target="_blank" rel="noopener" class="cta-button cta-secondary">
+            
+            🔘 Request a Demo
+          </a>
+        </div>
 
-          <article class="panel transcript-card">
-            <div class="section-title title-row">
-              <span>
-                <svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z" /></svg>
-                <h2>Conversation Transcript</h2>
-              </span>
-              <button id="toggle-transcript" type="button">View Full Transcript</button>
-            </div>
-            <div id="transcript-list" class="transcript-list"></div>
-          </article>
-        </section>
-
-        <section class="panel analytics">
-          <div class="section-title">
-            <svg viewBox="0 0 24 24"><path d="M3 3v18h18" /><path d="M7 16v-5" /><path d="M12 16V8" /><path d="M17 16v-9" /></svg>
-            <h2>Call Analytics</h2>
-          </div>
-          <div class="analytics-grid">
-            <div><small>Talk to Listen Ratio</small><strong id="ratio-main">-</strong><span id="ratio-sub">AI share estimate</span></div>
-            <div><small>First Contact Resolution</small><strong>Resolved</strong><span>Issue settled by AI</span></div>
-            <div><small>Verification Status</small><strong>Passed</strong><span>Call completed</span></div>
-            <div><small>Intent Confidence</small><strong id="confidence-main">-</strong><span>Estimated confidence</span></div>
-            <div><small>Feature Inquiry</small><strong id="inquiry-main">-</strong><span>Conversation signal</span></div>
-          </div>
-        </section>
       </section>
     </main>
 
-    <script src="./app.js"></script>
+    <script src="./app.js?v=20260619-1"></script>
   </body>
 </html>
