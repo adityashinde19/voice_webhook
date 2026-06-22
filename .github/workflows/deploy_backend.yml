@@ -2,12 +2,8 @@ name: Deploy Backend to Azure Container Apps.. .
 
 on:
   push:
-    branches: [main]
-    paths:
-      - 'app/**'
-      - 'Dockerfile'
-      - 'requirements.txt'
-      - '.github/workflows/deploy_backend.yml'
+    branches:
+      - main
   workflow_dispatch:
 
 env:
