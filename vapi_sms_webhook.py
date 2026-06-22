@@ -108,8 +108,7 @@ def _store_call_analytics(call_id: str, analytics: dict[str, Any]) -> None:
 
 def _build_report_url(call_id: str) -> str:
     report_ui_base_url = os.getenv("REPORT_UI_BASE_URL", "http://127.0.0.1:8002/call-report").rstrip("/")
-    report_api_base_url = os.getenv("REPORT_API_BASE_URL", "http://127.0.0.1:8002").rstrip("/")
-    return f"{report_ui_base_url}/?callId={call_id}&apiBase={report_api_base_url}"
+    return f"{report_ui_base_url}/?callId={call_id}"
 
 
 def _save_report_url(report_url: str) -> None:
