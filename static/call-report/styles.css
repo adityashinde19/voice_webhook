@@ -69,6 +69,7 @@ input:focus-visible {
 .input-row {
   display: flex;
   align-items: center;
+  width: 100%;
 }
 
 .topbar {
@@ -331,6 +332,12 @@ h1 {
   line-height: 1.15;
 }
 
+/* Date & Time card needs smaller font to fit on one line */
+#datetime-main {
+  font-size: clamp(16px, 1.8vw, 20px) !important;
+  line-height: 1.2;
+}
+
 .metric small,
 .analytics small {
   display: block;
@@ -343,6 +350,7 @@ h1 {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
   gap: 16px;
   margin-bottom: 16px;
+  margin-top: 28px;
 }
 
 .summary-card,
@@ -491,7 +499,7 @@ li::before {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   overflow: hidden;
 }
 
@@ -502,15 +510,15 @@ li::before {
   background: linear-gradient(180deg, var(--purple), var(--cyan));
 }
 
-.waveform span:nth-child(1) { height: 18px; }
-.waveform span:nth-child(2) { height: 32px; }
-.waveform span:nth-child(3) { height: 46px; }
-.waveform span:nth-child(4) { height: 28px; }
-.waveform span:nth-child(5) { height: 40px; }
-.waveform span:nth-child(6) { height: 22px; }
-.waveform span:nth-child(7) { height: 52px; }
-.waveform span:nth-child(8) { height: 36px; }
-.waveform span:nth-child(9) { height: 24px; }
+.waveform span:nth-child(1)  { height: 18px; }
+.waveform span:nth-child(2)  { height: 32px; }
+.waveform span:nth-child(3)  { height: 46px; }
+.waveform span:nth-child(4)  { height: 28px; }
+.waveform span:nth-child(5)  { height: 40px; }
+.waveform span:nth-child(6)  { height: 22px; }
+.waveform span:nth-child(7)  { height: 52px; }
+.waveform span:nth-child(8)  { height: 36px; }
+.waveform span:nth-child(9)  { height: 24px; }
 .waveform span:nth-child(10) { height: 42px; }
 .waveform span:nth-child(11) { height: 30px; }
 .waveform span:nth-child(12) { height: 16px; }
@@ -739,28 +747,34 @@ body[data-sentiment="neutral"] .chart-line {
 
 /* ── Gauge metric card ── */
 .gauge-metric {
-  flex-direction: column;
-  justify-content: center;
+  flex-direction: row;
   align-items: center;
-  gap: 0;
-  padding: 16px;
+  gap: 16px;
+  padding: 20px;
 }
 .gauge-wrap {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  width: 100%;
+  justify-content: center;
+  flex: 0 0 auto;
 }
 .gauge-svg {
-  width: 100%;
-  max-width: 140px;
+  width: 90px;
+  max-width: 90px;
+}
+.gauge-sentiment-word {
+  display: block;
+  margin-top: 2px;
+  font-size: clamp(24px, 3vw, 32px);
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--fg);
 }
 .gauge-label {
   display: block;
   margin-top: 2px;
   font-size: 13px;
   color: var(--muted);
-  text-align: center;
 }
 #gauge-needle {
   transform-origin: 70px 75px;

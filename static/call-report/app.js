@@ -12,8 +12,11 @@ const elements = {
   reportTime: document.querySelector("#report-time"),
   durationMain: document.querySelector("#duration-main"),
   durationSub: document.querySelector("#duration-sub"),
+  datetimeMain: document.querySelector("#datetime-main"),
+  datetimeSub: document.querySelector("#datetime-sub"),
   sentimentMain: document.querySelector("#sentiment-main"),
   sentimentSub: document.querySelector("#sentiment-sub"),
+  gaugeSentimentWord: document.querySelector("#gauge-sentiment-word"),
   summaryText: document.querySelector("#summary-text"),
   highlights: document.querySelector("#highlights"),
   chartLine: document.querySelector("#chart-line"),
@@ -231,10 +234,15 @@ function renderReport(report) {
   elements.eventType.textContent = report.eventType || "End-of-call report";
   elements.reportDate.textContent = dateParts.date;
   elements.reportTime.textContent = dateParts.time;
+  elements.datetimeMain.textContent = dateParts.date;
+  elements.datetimeSub.textContent = dateParts.time;
   elements.durationMain.textContent = duration.main;
   elements.durationSub.textContent = duration.sub;
-  elements.sentimentMain.textContent = sentimentInfo.label;
-  elements.sentimentSub.textContent = sentimentInfo.sub;
+  if (elements.sentimentMain) elements.sentimentMain.textContent = sentimentInfo.label;
+  if (elements.sentimentSub) elements.sentimentSub.textContent = sentimentInfo.sub;
+  if (elements.gaugeSentimentWord) elements.gaugeSentimentWord.textContent = sentimentInfo.label;
+  const gaugeLabel = document.querySelector("#gauge-label");
+  if (gaugeLabel) gaugeLabel.textContent = sentimentInfo.sub;
   elements.summaryText.textContent = report.summary || "No summary received.";
   elements.highlights.innerHTML = buildHighlights(report, sentimentInfo.label.toLowerCase())
     .map((item) => `<li>${escapeHtml(item)}</li>`)
