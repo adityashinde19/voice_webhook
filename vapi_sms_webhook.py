@@ -1,7 +1,8 @@
 ﻿import json
 import os
 import time
-from datetime import datetime
+from datetime import date, datetime
+from decimal import Decimal
 from pathlib import Path
 from typing import Any, Optional
 
@@ -195,6 +196,143 @@ async def get_call_report(call_id: str) -> JSONResponse:
         raise HTTPException(status_code=404, detail="Call analytics not found.")
 
     return JSONResponse(analytics)
+
+
+def _validate_customer(
+    email: Optional[str],
+    phone_number: Optional[str],
+    zip_code: Optional[str],
+    card_last4: Optional[str],
+    payment_method: Optional[str],
+) -> Optional[dict[str, Any]]:
+    query = """
+    SELECT TOP 1
+        customer_id, full_name, email, phone_number, zip_code, card_last4,
+        region, payment_method, start_subscription, end_subscription,
+        current_plan, payment_amount,
+        (
+            CASE WHEN email = ? THEN 1 ELSE 0 END
+            + CASE WHEN phone_number = ? THEN 1 ELSE 0 END
+            + CASE WHEN zip_code = ? THEN 1 ELSE 0 END
+            + CASE WHEN card_last4 = ? THEN 1 ELSE 0 END
+            + CASE WHEN payment_method = ? THEN 1 ELSE 0 END
+        ) AS match_score
+    FROM vapi_demo
+    WHERE (
+        CASE WHEN email = ? THEN 1 ELSE 0 END
+        + CASE WHEN phone_number = ? THEN 1 ELSE 0 END
+        + CASE WHEN zip_code = ? THEN 1 ELSE 0 END
+        + CASE WHEN card_last4 = ? THEN 1 ELSE 0 END
+        + CASE WHEN payment_method = ? THEN 1 ELSE 0 END
+    ) >= 3
+    ORDER BY match_score DESC;
+    """
+    params = (
+        email, phone_number, zip_code, card_last4, payment_method,
+        email, phone_number, zip_code, card_last4, payment_method,
+    )
+
+    with _get_db_connection() as connection:
+        cursor = connection.cursor()
+        cursor.execute(query, *params)
+        row = cursor.fetchone()
+        if row is None:
+            return None
+        columns = [column[0] for column in cursor.description]
+
+    record: dict[str, Any] = {}
+    for column, value in zip(columns, row):
+        if isinstance(value, date):
+            record[column] = value.isoformat()
+        elif isinstance(value, Decimal):
+            record[column] = float(value)
+        else:
+            record[column] = value
+
+    return record
+
+
+def _coerce_arguments(raw: Any) -> dict[str, Any]:
+    if isinstance(raw, str):
+        try:
+            raw = json.loads(raw)
+        except (ValueError, TypeError):
+            return {}
+    return raw if isinstance(raw, dict) else {}
+
+
+def _extract_validation_fields(body: dict[str, Any]) -> tuple[dict[str, Any], Optional[str]]:
+    merged: dict[str, Any] = {}
+    tool_call_id: Optional[str] = None
+
+    tool_calls = (
+        _safe_get(body, "message", "toolCalls")
+        or _safe_get(body, "message", "toolCallList")
+        or _safe_get(body, "message", "tool_calls")
+        or body.get("toolCalls")
+        or body.get("toolCallList")
+        or []
+    )
+    if isinstance(tool_calls, dict):
+        tool_calls = [tool_calls]
+    if isinstance(tool_calls, list):
+        for tool_call in tool_calls:
+            if not isinstance(tool_call, dict):
+                continue
+            tool_call_id = tool_call.get("id") or tool_call_id
+            arguments = (
+                _safe_get(tool_call, "function", "arguments")
+                or tool_call.get("arguments")
+            )
+            merged.update(_coerce_arguments(arguments))
+
+    merged.update(_coerce_arguments(body.get("arguments")))
+
+    for key in ("email", "phone_number", "zip_code", "card_last4", "payment_method"):
+        if body.get(key) is not None:
+            merged[key] = body.get(key)
+
+    return merged, tool_call_id
+
+
+@app.post("/webhook/validation_demo")
+async def validate_customer_demo(request: Request) -> JSONResponse:
+    payload = await request.json()
+    body = payload if isinstance(payload, dict) else {}
+
+    print("\n" + "=" * 80, flush=True)
+    print("VALIDATION DEMO REQUEST", flush=True)
+    print(json.dumps(body, ensure_ascii=False)[:2000], flush=True)
+
+    fields, tool_call_id = _extract_validation_fields(body)
+    email = fields.get("email")
+    phone_number = fields.get("phone_number")
+    zip_code = fields.get("zip_code")
+    card_last4 = fields.get("card_last4")
+    payment_method = fields.get("payment_method")
+
+    provided = [value for value in (email, phone_number, zip_code, card_last4, payment_method) if value]
+    print(f"Parsed fields: {json.dumps({k: fields.get(k) for k in ('email', 'phone_number', 'zip_code', 'card_last4', 'payment_method')}, ensure_ascii=False)}", flush=True)
+    if len(provided) < 3:
+        raise HTTPException(status_code=400, detail="Provide at least 3 of: email, phone_number, zip_code, card_last4, payment_method.")
+
+    try:
+        record = _validate_customer(email, phone_number, zip_code, card_last4, payment_method)
+    except Exception as error:
+        print(f"Customer validation failed: {error}", flush=True)
+        raise HTTPException(status_code=500, detail="Unable to validate customer.") from error
+
+    if record is None:
+        result = {"validated": False, "message": "No matching customer found.", "customer": None}
+        if tool_call_id:
+            return JSONResponse({"results": [{"toolCallId": tool_call_id, "result": json.dumps(result, ensure_ascii=False)}]}, status_code=404)
+        return JSONResponse(result, status_code=404)
+
+    print(f"Customer validated: customer_id={record.get('customer_id')} full_name={record.get('full_name')}", flush=True)
+    result = {"validated": True, "message": "Customer validated successfully.", "customer": record}
+    if tool_call_id:
+        return JSONResponse({"results": [{"toolCallId": tool_call_id, "result": json.dumps(result, ensure_ascii=False)}]})
+    return JSONResponse(result)
 
 
 @app.post("/webhook/vapi")
