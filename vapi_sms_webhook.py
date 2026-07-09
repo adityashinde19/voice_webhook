@@ -302,7 +302,8 @@ async def validate_customer_demo(request: Request) -> JSONResponse:
 
     print("\n" + "=" * 80, flush=True)
     print("VALIDATION DEMO REQUEST", flush=True)
-    print(json.dumps(body, ensure_ascii=False)[:2000], flush=True)
+    print("=" * 80, flush=True)
+    print(f"Raw Payload: {json.dumps(body, ensure_ascii=False)[:2000]}", flush=True)
 
     fields, tool_call_id = _extract_validation_fields(body)
     email = fields.get("email")
@@ -312,27 +313,38 @@ async def validate_customer_demo(request: Request) -> JSONResponse:
     payment_method = fields.get("payment_method")
 
     provided = [value for value in (email, phone_number, zip_code, card_last4, payment_method) if value]
-    print(f"Parsed fields: {json.dumps({k: fields.get(k) for k in ('email', 'phone_number', 'zip_code', 'card_last4', 'payment_method')}, ensure_ascii=False)}", flush=True)
+    print(f"Tool Call ID: {tool_call_id}", flush=True)
+    print(f"Parsed Fields: {json.dumps({k: fields.get(k) for k in ('email', 'phone_number', 'zip_code', 'card_last4', 'payment_method')}, ensure_ascii=False)}", flush=True)
+    print(f"Provided Count: {len(provided)} (minimum 3 required)", flush=True)
     if len(provided) < 3:
+        print("Validation Result: REJECTED (not enough fields provided)", flush=True)
+        print("=" * 80 + "\n", flush=True)
         raise HTTPException(status_code=400, detail="Provide at least 3 of: email, phone_number, zip_code, card_last4, payment_method.")
 
     try:
         record = _validate_customer(email, phone_number, zip_code, card_last4, payment_method)
     except Exception as error:
         print(f"Customer validation failed: {error}", flush=True)
+        print("=" * 80 + "\n", flush=True)
         raise HTTPException(status_code=500, detail="Unable to validate customer.") from error
 
     if record is None:
+        print("Validation Result: NO MATCH (no customer with >= 3 matching fields)", flush=True)
+        print("=" * 80 + "\n", flush=True)
         result = {"validated": False, "message": "No matching customer found.", "customer": None}
         if tool_call_id:
             return JSONResponse({"results": [{"toolCallId": tool_call_id, "result": json.dumps(result, ensure_ascii=False)}]}, status_code=404)
         return JSONResponse(result, status_code=404)
 
-    print(f"Customer validated: customer_id={record.get('customer_id')} full_name={record.get('full_name')}", flush=True)
+    print("Validation Result: MATCH FOUND", flush=True)
+    print(f"Customer ID: {record.get('customer_id')}", flush=True)
+    print(f"Full Name: {record.get('full_name')}", flush=True)
+    print(f"Customer Record: {json.dumps(record, ensure_ascii=False)}", flush=True)
     result = {"validated": True, "message": "Customer validated successfully.", "customer": record}
-    if tool_call_id:
-        return JSONResponse({"results": [{"toolCallId": tool_call_id, "result": json.dumps(result, ensure_ascii=False)}]})
-    return JSONResponse(result)
+    response_body = {"results": [{"toolCallId": tool_call_id, "result": json.dumps(result, ensure_ascii=False)}]} if tool_call_id else result
+    print(f"Response Sent: {json.dumps(response_body, ensure_ascii=False)}", flush=True)
+    print("=" * 80 + "\n", flush=True)
+    return JSONResponse(response_body)
 
 
 @app.post("/webhook/vapi")
