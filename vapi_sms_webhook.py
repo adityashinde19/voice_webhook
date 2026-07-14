@@ -6,12 +6,13 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any, Optional
 
+import httpx
 import pyodbc
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from twilio.rest import Client
 
@@ -112,6 +113,16 @@ def _build_report_url(call_id: str) -> str:
     return f"{report_ui_base_url}/?callId={call_id}"
 
 
+def _build_vapi_report_url(call_id: str) -> str:
+    report_ui_base_url = os.getenv("REPORT_UI_BASE_URL", "http://127.0.0.1:8002/call-report").rstrip("/")
+    return f"{report_ui_base_url}/?callId={call_id}&source=vapi"
+
+
+def _build_live_report_url(call_id: str) -> str:
+    report_ui_base_url = os.getenv("REPORT_UI_BASE_URL", "http://127.0.0.1:8002/call-report").rstrip("/")
+    return f"{report_ui_base_url}/?callId={call_id}&source=live"
+
+
 def _save_report_url(report_url: str) -> None:
     LATEST_REPORT_URL_FILE.write_text(report_url, encoding="utf-8")
     with REPORT_URL_HISTORY_FILE.open("a", encoding="utf-8") as file:
@@ -179,6 +190,106 @@ def _get_call_analytics(call_id: str) -> Optional[dict[str, Any]]:
     return json.loads(raw_analytics)
 
 
+def _parse_datetime(value: Any) -> Optional[datetime]:
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def _seconds_between(started_at: Any, ended_at: Any) -> Optional[float]:
+    start = _parse_datetime(started_at)
+    end = _parse_datetime(ended_at)
+    if not start or not end:
+        return None
+    return max((end - start).total_seconds(), 0)
+
+
+def _format_vapi_messages_as_transcript(messages: Any) -> Optional[str]:
+    if not isinstance(messages, list):
+        return None
+
+    lines: list[str] = []
+    for message in messages:
+        if not isinstance(message, dict):
+            continue
+        text = message.get("message") or message.get("text") or message.get("content")
+        if not text:
+            continue
+        role = str(message.get("role") or message.get("speakerLabel") or "Conversation").lower()
+        speaker = "User" if role in {"user", "customer", "human"} else "AI"
+        lines.append(f"{speaker}: {text}")
+
+    return "\n".join(lines) or None
+
+
+def _normalize_vapi_call(call: dict[str, Any]) -> dict[str, Any]:
+    artifact = call.get("artifact", {}) if isinstance(call.get("artifact"), dict) else {}
+    analysis = call.get("analysis", {}) if isinstance(call.get("analysis"), dict) else {}
+    structured_data = analysis.get("structuredData", {}) if isinstance(analysis.get("structuredData"), dict) else {}
+    duration_seconds = (
+        call.get("durationSeconds")
+        or _seconds_between(call.get("startedAt"), call.get("endedAt"))
+    )
+    duration_minutes = call.get("durationMinutes") or (duration_seconds / 60 if duration_seconds else None)
+    duration_ms = call.get("durationMs") or (round(duration_seconds * 1000) if duration_seconds else None)
+    transcript = (
+        call.get("transcript")
+        or artifact.get("transcript")
+        or _format_vapi_messages_as_transcript(call.get("messages"))
+    )
+
+    return {
+        "receivedAt": call.get("endedAt") or call.get("updatedAt") or call.get("createdAt"),
+        "eventType": "vapi-call-detail",
+        "timestamp": call.get("updatedAt") or call.get("endedAt") or call.get("createdAt"),
+        "callId": call.get("id"),
+        "customerNumber": (
+            _safe_get(call, "customer", "number")
+            or _safe_get(call, "phoneNumber", "number")
+            or _safe_get(call, "destination", "number")
+        ),
+        "transcript": transcript,
+        "recordingUrl": call.get("recordingUrl") or artifact.get("recordingUrl"),
+        "sentiment": structured_data.get("sentiment") or analysis.get("sentiment"),
+        "durationSeconds": duration_seconds,
+        "durationMinutes": duration_minutes,
+        "durationMs": duration_ms,
+        "cost": call.get("cost") or _safe_get(call, "costBreakdown", "total"),
+        "summary": call.get("summary") or analysis.get("summary"),
+        "source": "vapi",
+    }
+
+
+async def _get_vapi_call_analytics(call_id: str) -> dict[str, Any]:
+    api_key = os.getenv("VAPI_API_KEY") or os.getenv("VAPI_PRIVATE_KEY")
+    if not api_key:
+        raise RuntimeError("Missing VAPI_API_KEY or VAPI_PRIVATE_KEY environment variable.")
+
+    api_base_url = os.getenv("VAPI_API_BASE_URL", "https://api.vapi.ai").rstrip("/")
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.get(
+                f"{api_base_url}/call/{call_id}",
+                headers={"Authorization": f"Bearer {api_key}"},
+            )
+    except httpx.HTTPError as error:
+        raise RuntimeError(f"Unable to fetch call from Vapi: {error}") from error
+
+    if response.status_code == 404:
+        raise HTTPException(status_code=404, detail="Vapi call not found.")
+    if response.status_code >= 400:
+        raise RuntimeError(f"Vapi API returned {response.status_code}: {response.text[:500]}")
+
+    call = response.json()
+    if not isinstance(call, dict):
+        raise RuntimeError("Vapi API returned an unexpected response.")
+
+    return _normalize_vapi_call(call)
+
+
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
@@ -198,7 +309,45 @@ async def get_call_report(call_id: str) -> JSONResponse:
     return JSONResponse(analytics)
 
 
+@app.get("/report/{call_id}")
+async def open_call_report(call_id: str) -> RedirectResponse:
+    try:
+        analytics = _get_call_analytics(call_id)
+    except Exception as error:
+        print(f"Unable to load analytics for report call_id={call_id}: {error}", flush=True)
+        raise HTTPException(status_code=500, detail="Unable to load call analytics.") from error
+
+    if analytics is None:
+        raise HTTPException(status_code=404, detail="Call analytics not found.")
+
+    return RedirectResponse(url=_build_report_url(call_id), status_code=307)
+
+
+@app.get("/api/vapi/calls/{call_id}")
+async def get_vapi_call_report(call_id: str) -> JSONResponse:
+    try:
+        analytics = await _get_vapi_call_analytics(call_id)
+    except HTTPException:
+        raise
+    except Exception as error:
+        print(f"Unable to load Vapi analytics for call_id={call_id}: {error}", flush=True)
+        raise HTTPException(status_code=500, detail="Unable to load Vapi call analytics.") from error
+
+    return JSONResponse(analytics)
+
+
+@app.get("/report/vapi/{call_id}")
+async def open_vapi_call_report(call_id: str) -> RedirectResponse:
+    return RedirectResponse(url=_build_vapi_report_url(call_id), status_code=307)
+
+
+@app.get("/report/live/{call_id}")
+async def open_live_call_report(call_id: str) -> RedirectResponse:
+    return RedirectResponse(url=_build_live_report_url(call_id), status_code=307)
+
+
 def _validate_customer(
+    full_name: Optional[str],
     email: Optional[str],
     phone_number: Optional[str],
     zip_code: Optional[str],
@@ -211,7 +360,8 @@ def _validate_customer(
         region, payment_method, start_subscription, end_subscription,
         current_plan, payment_amount,
         (
-            CASE WHEN email = ? THEN 1 ELSE 0 END
+            CASE WHEN full_name = ? THEN 1 ELSE 0 END
+            + CASE WHEN email = ? THEN 1 ELSE 0 END
             + CASE WHEN phone_number = ? THEN 1 ELSE 0 END
             + CASE WHEN zip_code = ? THEN 1 ELSE 0 END
             + CASE WHEN card_last4 = ? THEN 1 ELSE 0 END
@@ -219,7 +369,8 @@ def _validate_customer(
         ) AS match_score
     FROM vapi_demo
     WHERE (
-        CASE WHEN email = ? THEN 1 ELSE 0 END
+        CASE WHEN full_name = ? THEN 1 ELSE 0 END
+        + CASE WHEN email = ? THEN 1 ELSE 0 END
         + CASE WHEN phone_number = ? THEN 1 ELSE 0 END
         + CASE WHEN zip_code = ? THEN 1 ELSE 0 END
         + CASE WHEN card_last4 = ? THEN 1 ELSE 0 END
@@ -228,8 +379,8 @@ def _validate_customer(
     ORDER BY match_score DESC;
     """
     params = (
-        email, phone_number, zip_code, card_last4, payment_method,
-        email, phone_number, zip_code, card_last4, payment_method,
+        full_name, email, phone_number, zip_code, card_last4, payment_method,
+        full_name, email, phone_number, zip_code, card_last4, payment_method,
     )
 
     with _get_db_connection() as connection:
@@ -288,7 +439,7 @@ def _extract_validation_fields(body: dict[str, Any]) -> tuple[dict[str, Any], Op
 
     merged.update(_coerce_arguments(body.get("arguments")))
 
-    for key in ("email", "phone_number", "zip_code", "card_last4", "payment_method"):
+    for key in ("full_name", "email", "phone_number", "zip_code", "card_last4", "payment_method"):
         if body.get(key) is not None:
             merged[key] = body.get(key)
 
@@ -306,23 +457,24 @@ async def validate_customer_demo(request: Request) -> JSONResponse:
     print(f"Raw Payload: {json.dumps(body, ensure_ascii=False)[:2000]}", flush=True)
 
     fields, tool_call_id = _extract_validation_fields(body)
+    full_name = fields.get("full_name")
     email = fields.get("email")
     phone_number = fields.get("phone_number")
     zip_code = fields.get("zip_code")
     card_last4 = fields.get("card_last4")
     payment_method = fields.get("payment_method")
 
-    provided = [value for value in (email, phone_number, zip_code, card_last4, payment_method) if value]
+    provided = [value for value in (full_name, email, phone_number, zip_code, card_last4, payment_method) if value]
     print(f"Tool Call ID: {tool_call_id}", flush=True)
-    print(f"Parsed Fields: {json.dumps({k: fields.get(k) for k in ('email', 'phone_number', 'zip_code', 'card_last4', 'payment_method')}, ensure_ascii=False)}", flush=True)
+    print(f"Parsed Fields: {json.dumps({k: fields.get(k) for k in ('full_name', 'email', 'phone_number', 'zip_code', 'card_last4', 'payment_method')}, ensure_ascii=False)}", flush=True)
     print(f"Provided Count: {len(provided)} (minimum 3 required)", flush=True)
     if len(provided) < 3:
         print("Validation Result: REJECTED (not enough fields provided)", flush=True)
         print("=" * 80 + "\n", flush=True)
-        raise HTTPException(status_code=400, detail="Provide at least 3 of: email, phone_number, zip_code, card_last4, payment_method.")
+        raise HTTPException(status_code=400, detail="Provide at least 3 of: full_name, email, phone_number, zip_code, card_last4, payment_method.")
 
     try:
-        record = _validate_customer(email, phone_number, zip_code, card_last4, payment_method)
+        record = _validate_customer(full_name, email, phone_number, zip_code, card_last4, payment_method)
     except Exception as error:
         print(f"Customer validation failed: {error}", flush=True)
         print("=" * 80 + "\n", flush=True)
