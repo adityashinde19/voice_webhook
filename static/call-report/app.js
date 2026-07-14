@@ -7,8 +7,8 @@ const elements = {
   retryButton: document.querySelector("#retry-button"),
   callForm: document.querySelector("#call-form"),
   callInput: document.querySelector("#call-id-input"),
-  reportDate: document.querySelector("#report-date"),
-  reportTime: document.querySelector("#report-time"),
+  datetimeMain: document.querySelector("#datetime-main"),
+  datetimeSub: document.querySelector("#datetime-sub"),
   durationMain: document.querySelector("#duration-main"),
   durationSub: document.querySelector("#duration-sub"),
   summaryText: document.querySelector("#summary-text"),
@@ -89,8 +89,8 @@ function formatDateParts(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return { date: String(value), time: "-" };
   return {
-    date: date.toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" }),
-    time: date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }),
+    date: date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+    time: date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true }),
   };
 }
 
@@ -214,8 +214,8 @@ function renderReport(report) {
   const messages = parseTranscript(report.transcript);
 
   document.body.dataset.sentiment = sentiment;
-  elements.reportDate.textContent = dateParts.date;
-  elements.reportTime.textContent = dateParts.time;
+  elements.datetimeMain.textContent = dateParts.date;
+  elements.datetimeSub.textContent = dateParts.time;
   elements.durationMain.textContent = duration.main;
   elements.durationSub.textContent = duration.sub;
   elements.summaryText.textContent = report.summary || "No summary received.";
