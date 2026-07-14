@@ -7,18 +7,11 @@ const elements = {
   retryButton: document.querySelector("#retry-button"),
   callForm: document.querySelector("#call-form"),
   callInput: document.querySelector("#call-id-input"),
-  eventType: document.querySelector("#event-type"),
   reportDate: document.querySelector("#report-date"),
   reportTime: document.querySelector("#report-time"),
   durationMain: document.querySelector("#duration-main"),
   durationSub: document.querySelector("#duration-sub"),
-  datetimeMain: document.querySelector("#datetime-main"),
-  datetimeSub: document.querySelector("#datetime-sub"),
-  sentimentMain: document.querySelector("#sentiment-main"),
-  sentimentSub: document.querySelector("#sentiment-sub"),
-  gaugeSentimentWord: document.querySelector("#gauge-sentiment-word"),
   summaryText: document.querySelector("#summary-text"),
-  highlights: document.querySelector("#highlights"),
   chartLine: document.querySelector("#chart-line"),
   chartFill: document.querySelector("#chart-fill"),
   chartPoints: document.querySelector("#chart-points"),
@@ -29,7 +22,6 @@ const elements = {
   playWideButton: document.querySelector("#play-recording-wide"),
   downloadAudio: document.querySelector("#download-audio"),
   ratioMain: document.querySelector("#ratio-main"),
-  inquiryMain: document.querySelector("#inquiry-main"),
   gaugeNeedle: document.querySelector("#gauge-needle"),
   gaugeArc: document.querySelector("#gauge-arc"),
   gaugeLabel: document.querySelector("#gauge-label"),
@@ -71,14 +63,6 @@ function getApiBase() {
   const fromQuery = params.get("apiBase");
   const configured = window.CALL_REPORT_API_BASE || "";
   return (fromQuery || configured).replace(/\/$/, "");
-}
-
-function getReportApiPath(callId) {
-  const params = new URLSearchParams(window.location.search);
-  const source = String(params.get("source") || "").toLowerCase();
-  const encodedCallId = encodeURIComponent(callId);
-  if (source === "live" || source === "direct" || source === "vapi") return `/api/vapi/calls/${encodedCallId}`;
-  return `/api/calls/${encodedCallId}`;
 }
 
 function showState(name) {
@@ -154,23 +138,6 @@ function sentimentMeta(sentiment) {
   }[sentiment];
 }
 
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-function buildHighlights(report, sentiment) {
-  const highlights = [];
-  if (report.summary) highlights.push(...String(report.summary).split(/(?<=[.!?])\s+/).filter(Boolean).slice(0, 2));
-  if (report.recordingUrl) highlights.push("Call recording is available for audit.");
-  highlights.push(`Overall customer sentiment is ${sentiment}.`);
-  return highlights.slice(0, 4);
-}
-
 function parseTranscript(text) {
   if (!text) return [];
   return String(text)
@@ -239,24 +206,12 @@ function renderReport(report) {
   const messages = parseTranscript(report.transcript);
 
   document.body.dataset.sentiment = sentiment;
-  elements.eventType.textContent = report.eventType || "End-of-call report";
   elements.reportDate.textContent = dateParts.date;
   elements.reportTime.textContent = dateParts.time;
-  elements.datetimeMain.textContent = dateParts.date;
-  elements.datetimeSub.textContent = dateParts.time;
   elements.durationMain.textContent = duration.main;
   elements.durationSub.textContent = duration.sub;
-  if (elements.sentimentMain) elements.sentimentMain.textContent = sentimentInfo.label;
-  if (elements.sentimentSub) elements.sentimentSub.textContent = sentimentInfo.sub;
-  if (elements.gaugeSentimentWord) elements.gaugeSentimentWord.textContent = sentimentInfo.label;
-  const gaugeLabel = document.querySelector("#gauge-label");
-  if (gaugeLabel) gaugeLabel.textContent = sentimentInfo.sub;
   elements.summaryText.textContent = report.summary || "No summary received.";
-  elements.highlights.innerHTML = buildHighlights(report, sentimentInfo.label.toLowerCase())
-    .map((item) => `<li>${escapeHtml(item)}</li>`)
-    .join("");
   elements.chartInsight.textContent = sentimentInfo.insight;
-  elements.inquiryMain.textContent = report.summary ? "Detected" : "Unknown";
   elements.ratioMain.textContent = estimateTalkRatio(messages);
 
   renderChart(sentimentInfo.points);
@@ -289,7 +244,7 @@ async function loadReport() {
   }
 
   showState("loading");
-  const url = `${getApiBase()}${getReportApiPath(callId)}`;
+  const url = `${getApiBase()}/api/calls/${encodeURIComponent(callId)}`;
   try {
     const response = await fetch(url, { headers: { Accept: "application/json" } });
     if (!response.ok) {
