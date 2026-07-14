@@ -65,6 +65,14 @@ function getApiBase() {
   return (fromQuery || configured).replace(/\/$/, "");
 }
 
+function getReportApiPath(callId) {
+  const params = new URLSearchParams(window.location.search);
+  const source = String(params.get("source") || "").toLowerCase();
+  const encodedCallId = encodeURIComponent(callId);
+  if (source === "live" || source === "direct" || source === "vapi") return `/api/vapi/calls/${encodedCallId}`;
+  return `/api/calls/${encodedCallId}`;
+}
+
 function showState(name) {
   for (const [key, node] of Object.entries({
     missing: elements.missing,
@@ -244,7 +252,7 @@ async function loadReport() {
   }
 
   showState("loading");
-  const url = `${getApiBase()}/api/calls/${encodeURIComponent(callId)}`;
+  const url = `${getApiBase()}${getReportApiPath(callId)}`;
   try {
     const response = await fetch(url, { headers: { Accept: "application/json" } });
     if (!response.ok) {
