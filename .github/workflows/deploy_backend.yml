@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
 
 env:
-  ACR_NAME: aressgenaiacr2
-  ACR_LOGIN_SERVER: aressgenaiacr2.azurecr.io
+  ACR_NAME: aressgenaiacr
+  ACR_LOGIN_SERVER: aressgenaiacr.azurecr.io
   IMAGE_NAME: vapiwebhook
   CONTAINER_APP_NAME: vapiwebhook
   RESOURCE_GROUP: aressgenai
