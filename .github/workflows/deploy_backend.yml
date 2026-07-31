@@ -1,4 +1,4 @@
-name: Deploy Backend to Azure Container Apps.. .
+name: Deploy Backend to Azure Container Apps
 
 on:
   push:
@@ -54,7 +54,28 @@ jobs:
             az containerapp update \
               --name ${{ env.CONTAINER_APP_NAME }} \
               --resource-group ${{ env.RESOURCE_GROUP }} \
-              --image ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+              --image ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+              --set-env-vars \
+                MSSQL_DRIVER="ODBC Driver 18 for SQL Server" \
+                MSSQL_SERVER="tcp:aressgenaisqldb.database.windows.net,1433" \
+                MSSQL_DATABASE="crumb-support" \
+                MSSQL_USERNAME="aressadmin" \
+                MSSQL_PASSWORD="Aress123$" \
+                MSSQL_ENCRYPT="yes" \
+                MSSQL_TRUST_SERVER_CERTIFICATE="no" \
+                MSSQL_CONNECTION_TIMEOUT="30" \
+                MSSQL_CONNECT_RETRIES="3" \
+                MSSQL_CONNECT_RETRY_DELAY_SECONDS="2" \
+                REPORT_UI_BASE_URL="http://localhost:8002/call-report" \
+                REPORT_API_BASE_URL="http://localhost:8002" \
+                TWILIO_ACCOUNT_SID="AC6aec5003a4279b996d27cda48ce4a372" \
+                TWILIO_AUTH_TOKEN="bfa863373bd34909658b20580f31d61d" \
+                TWILIO_MESSAGING_SERVICE_SID="MG6be342ab14fdaa287b743af88bee5865" \
+                TWILIO_TO_NUMBER="+12296823466" \
+                TWILIO_SMS_BODY="Revenge of the Sith was the best of the prequel trilogy." \
+                TWILIO_FROM_NUMBER="+18555721203" \
+                TWILIO_REPORT_SMS_BODY="Thank you for calling Aress. Below is the attached report of your demo call: {report_url}" \
+                VAPI_API_KEY="c88c5db1-5d1b-4f4d-995f-31374611671c"
 
           else
 
@@ -69,7 +90,28 @@ jobs:
               --ingress external \
               --registry-server ${{ env.ACR_LOGIN_SERVER }} \
               --registry-username ${{ secrets.ACR_USERNAME }} \
-              --registry-password ${{ secrets.ACR_PASSWORD }}
+              --registry-password ${{ secrets.ACR_PASSWORD }} \
+              --env-vars \
+                MSSQL_DRIVER="ODBC Driver 18 for SQL Server" \
+                MSSQL_SERVER="tcp:aressgenaisql.database.windows.net,1433" \
+                MSSQL_DATABASE="crumb-support1" \
+                MSSQL_USERNAME="aressadmin" \
+                MSSQL_PASSWORD="Aress123$" \
+                MSSQL_ENCRYPT="yes" \
+                MSSQL_TRUST_SERVER_CERTIFICATE="no" \
+                MSSQL_CONNECTION_TIMEOUT="30" \
+                MSSQL_CONNECT_RETRIES="3" \
+                MSSQL_CONNECT_RETRY_DELAY_SECONDS="2" \
+                REPORT_UI_BASE_URL="http://localhost:8002/call-report" \
+                REPORT_API_BASE_URL="http://localhost:8002" \
+                TWILIO_ACCOUNT_SID="AC6aec5003a4279b996d27cda48ce4a372" \
+                TWILIO_AUTH_TOKEN="bfa863373bd34909658b20580f31d61d" \
+                TWILIO_MESSAGING_SERVICE_SID="MG6be342ab14fdaa287b743af88bee5865" \
+                TWILIO_TO_NUMBER="+12296823466" \
+                TWILIO_SMS_BODY="Revenge of the Sith was the best of the prequel trilogy." \
+                TWILIO_FROM_NUMBER="+18555721203" \
+                TWILIO_REPORT_SMS_BODY="Thank you for calling Aress. Below is the attached report of your demo call: {report_url}" \
+                VAPI_API_KEY="c88c5db1-5d1b-4f4d-995f-31374611671c"
 
           fi
 
